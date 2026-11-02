@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Tycoon da Energia</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#E4ECF1;--surface:#FFFFFF;--ink:#13202A;--mute:#586A76;--line:#C5D3DB;
+  --accent:#F2A900;--accent-ink:#2A1D00;--ring:#13202A;--t0:#1F8A5B;--t1:#9A6A2F;--t2:#6A4FC4;--tx:#13202A;
+  color-scheme:light;box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#0E1A21;--surface:#16262F;--ink:#E7EFF3;--mute:#93A7B3;--line:#2A404C;
+    --accent:#FFC53D;--ring:#E7EFF3;--t0:#3FC48A;--t1:#D09A55;--t2:#9C86F0;--tx:#E7EFF3;color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0E1A21;--surface:#16262F;--ink:#E7EFF3;--mute:#93A7B3;--line:#2A404C;
+  --accent:#FFC53D;--ring:#E7EFF3;--t0:#3FC48A;--t1:#D09A55;--t2:#9C86F0;--tx:#E7EFF3;color-scheme:dark;
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:500 16px/1.4 "Barlow",system-ui,sans-serif;-webkit-tap-highlight-color:transparent}
+.wrap{max-width:520px;margin:0 auto;padding:20px 16px 40px}
+h1{font:700 22px/1 "Barlow Condensed",system-ui,sans-serif;margin:0 0 20px}
+.meter{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.big{font:700 64px/1 "Barlow Condensed",system-ui,sans-serif;font-variant-numeric:tabular-nums}
+.unit{font:600 22px "Barlow Condensed",system-ui,sans-serif;color:var(--mute)}
+.rate{color:var(--mute);margin-top:4px;font-variant-numeric:tabular-nums}
+.stage{position:relative;display:grid;place-items:center;padding:28px 0 20px}
+#tap{width:190px;height:190px;border-radius:50%;border:0;background:var(--accent);color:var(--accent-ink);cursor:pointer;touch-action:manipulation;user-select:none;-webkit-user-select:none;box-shadow:0 0 0 10px color-mix(in srgb,var(--accent) 22%,transparent),0 0 0 22px color-mix(in srgb,var(--accent) 10%,transparent);transition:transform .08s}
+#tap:active{transform:scale(.94)}
+#tap svg{width:84px;height:84px}
+#tap span{display:block;font:700 18px "Barlow Condensed",system-ui,sans-serif;margin-top:2px}
+button:focus-visible{outline:3px solid var(--ring);outline-offset:3px}
+.pop{position:absolute;pointer-events:none;font:700 26px "Barlow Condensed",system-ui,sans-serif;animation:up .7s ease-out forwards}
+@keyframes up{from{opacity:1;transform:translateY(0)}to{opacity:0;transform:translateY(-70px)}}
+.tabs{display:flex;gap:0;margin-bottom:0}
+.tab{flex:1;background:none;border:0;border-bottom:3px solid var(--line);color:var(--mute);padding:10px 4px;font:700 20px "Barlow Condensed",system-ui,sans-serif;cursor:pointer}
+.tab[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+.pane[hidden]{display:none}
+.row{display:grid;grid-template-columns:1fr auto;gap:2px 12px;align-items:center;width:100%;text-align:left;background:transparent;color:var(--ink);border:0;border-bottom:1px solid var(--line);border-left:4px solid var(--tx);padding:14px 4px 14px 12px;font:inherit;cursor:pointer;touch-action:manipulation}
+.row[data-t="0"]{border-left-color:var(--t0)}.row[data-t="1"]{border-left-color:var(--t1)}.row[data-t="2"]{border-left-color:var(--t2)}
+.row .n{font-weight:600}
+.row .d{grid-column:1;color:var(--mute);font-size:14px}
+.row .c{grid-row:1/3;grid-column:2;text-align:right;font:700 20px "Barlow Condensed",system-ui,sans-serif;font-variant-numeric:tabular-nums}
+.row .c small{display:block;font:500 13px "Barlow",system-ui,sans-serif;color:var(--mute)}
+.row .o{display:inline-block;min-width:1.8em;padding:0 6px;margin-left:6px;border-radius:99px;background:var(--ink);color:var(--bg);font-size:13px;text-align:center}
+.row.ok{background:color-mix(in srgb,var(--accent) 16%,transparent)}
+.row:not(.ok){opacity:.55;cursor:not-allowed}
+.hint{color:var(--mute);font-size:14px;margin:12px 0 4px}
+.foot{display:flex;justify-content:space-between;align-items:center;margin-top:24px;color:var(--mute);font-size:14px}
+#reset{background:none;border:1px solid var(--line);color:var(--mute);border-radius:8px;padding:8px 12px;font:inherit;cursor:pointer}
+@media (prefers-reduced-motion:reduce){.pop{animation:none;opacity:0}#tap{transition:none}}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <h1>Tycoon da Energia</h1>
+  <div class="meter"><span class="big" id="e">0</span><span class="unit">kWh</span></div>
+  <div class="rate" id="r">0 kWh por segundo</div>
+  <div class="stage" id="stage">
+    <button id="tap" aria-label="Gerar energia">
+      <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M13.5 2 4 13.5h6.2L9 22l10-12.5h-6.4z"/></svg>
+      <span id="cp">+1 por toque</span>
+    </button>
+  </div>
+
+  <div class="tabs" role="tablist">
+    <button class="tab" role="tab" id="tg" aria-selected="true">Geradores</button>
+    <button class="tab" role="tab" id="tf" aria-selected="false">Fábricas</button>
+  </div>
+  <section class="pane" id="gp">
+    <div class="hint">Verde: renovável. Marrom: fóssil. Roxo: nuclear.</div>
+    <div id="up"></div><div id="gens"></div>
+  </section>
+  <section class="pane" id="fp" hidden>
+    <div class="hint">Fábricas não geram energia, mas turbinam os geradores do mesmo tipo.</div>
+    <div id="facts"></div>
+  </section>
+
+  <div class="foot"><span id="tot">Total gerado: 0 kWh</span><button id="reset">Zerar jogo</button></div>
+</main>
+
+<script>
+const KEY = "tycoon-energia-v2";
+const GENS = [
+  {n:"Dínamo de bicicleta", d:"Alguém pedala por você.", c:15, p:0.2, t:0},
+  {n:"Painel solar", d:"Rende bem ao meio-dia.", c:120, p:1.5, t:0},
+  {n:"Gerador a diesel", d:"Barulhento, mas constante.", c:450, p:5, t:1},
+  {n:"Turbina eólica", d:"Trabalha enquanto houver vento.", c:1500, p:12, t:0},
+  {n:"Termelétrica a carvão", d:"Queima sem parar.", c:6000, p:35, t:1},
+  {n:"Usina hidrelétrica", d:"Uma represa inteira girando turbinas.", c:20000, p:90, t:0},
+  {n:"Usina a gás", d:"Liga rápido e rende muito.", c:70000, p:240, t:1},
+  {n:"Usina nuclear", d:"Muita energia em pouco espaço.", c:240000, p:600, t:2},
+  {n:"Reator de fusão", d:"Uma pequena estrela de bolso.", c:2500000, p:3500, t:2}
+];
+const FACT = [
+  {n:"Fábrica de células solares", d:"+10% nos renováveis por unidade.", c:900, t:0, b:.1},
+  {n:"Refinaria", d:"+10% nos fósseis por unidade.", c:2800, t:1, b:.1},
+  {n:"Fábrica de cabos", d:"+25% de ganho por toque por unidade.", c:7000, t:"click", b:.25},
+  {n:"Laboratório de combustível", d:"+10% nos nucleares por unidade.", c:110000, t:2, b:.1},
+  {n:"Fábrica de transformadores", d:"+3% em todos os geradores por unidade.", c:500000, t:"all", b:.03}
+];
+let S = {e:0, total:0, lvl:0, own:GENS.map(()=>0), fown:FACT.map(()=>0), t:Date.now()};
+try { const raw = localStorage.getItem(KEY); if (raw) S = Object.assign(S, JSON.parse(raw)); } catch (err) {}
+if (!Array.isArray(S.own) || S.own.length !== GENS.length) S.own = GENS.map(()=>0);
+if (!Array.isArray(S.fown) || S.fown.length !== FACT.length) S.fown = FACT.map(()=>0);
+
+const UN = [[1e12," tri"],[1e9," bi"],[1e6," mi"],[1e3," mil"]];
+function fmt(n){
+  for (const [v,s] of UN) if (n >= v) return (n/v).toLocaleString("pt-BR",{maximumFractionDigits:2}) + s;
+  return n.toLocaleString("pt-BR",{maximumFractionDigits: n < 10 ? 1 : 0});
+}
+const fo = k => FACT.reduce((a,f,i) => a + (f.t === k ? f.b * S.fown[i] : 0), 0);
+const mult = t => (1 + fo(t)) * (1 + fo("all"));
+const cost = (g,i) => Math.ceil(g.c * Math.pow(1.15, S.own[i]));
+const fcost = (f,i) => Math.ceil(f.c * Math.pow(1.25, S.fown[i]));
+const upCost = () => Math.ceil(25 * Math.pow(1.9, S.lvl));
+const click = () => (1 + S.lvl) * (1 + fo("click"));
+const cps = () => GENS.reduce((a,g,i) => a + g.p * S.own[i] * mult(g.t), 0);
+
+const away = Math.min((Date.now() - (S.t || Date.now())) / 1000, 7200);
+if (away > 5 && cps() > 0) { const gain = cps() * away; S.e += gain; S.total += gain; }
+
+function makeRow(parent, t, onBuy){
+  const b = document.createElement("button");
+  b.className = "row"; b.dataset.t = t;
+  b.innerHTML = '<span class="n"></span><span class="c"></span><span class="d"></span>';
+  b.addEventListener("click", onBuy);
+  parent.appendChild(b);
+  return {b, n:b.children[0], c:b.children[1], d:b.children[2]};
+}
+const upRow = makeRow(document.getElementById("up"), "x", () => {
+  const c = upCost(); if (S.e >= c) { S.e -= c; S.lvl++; render(); save(); }
+});
+upRow.d.textContent = "Cada nível soma +1 kWh a cada toque.";
+const rows = GENS.map((g,i) => {
+  const r = makeRow(document.getElementById("gens"), g.t, () => {
+    const c = cost(g,i); if (S.e >= c) { S.e -= c; S.own[i]++; render(); save(); }
+  });
+  r.d.textContent = g.d; return r;
+});
+const frows = FACT.map((f,i) => {
+  const r = makeRow(document.getElementById("facts"), typeof f.t === "number" ? f.t : "x", () => {
+    const c = fcost(f,i); if (S.e >= c) { S.e -= c; S.fown[i]++; render(); save(); }
+  });
+  r.d.textContent = f.d; return r;
+});
+
+function render(){
+  document.getElementById("e").textContent = fmt(Math.floor(S.e));
+  document.getElementById("r").textContent = fmt(cps()) + " kWh por segundo";
+  document.getElementById("cp").textContent = "+" + fmt(click()) + " por toque";
+  document.getElementById("tot").textContent = "Total gerado: " + fmt(Math.floor(S.total)) + " kWh";
+  const uc = upCost();
+  upRow.n.innerHTML = "Cabo mais grosso<span class=\"o\">" + S.lvl + "</span>";
+  upRow.c.innerHTML = fmt(uc) + "<small>kWh</small>";
+  upRow.b.classList.toggle("ok", S.e >= uc);
+  GENS.forEach((g,i) => {
+    const r = rows[i], c = cost(g,i);
+    r.n.innerHTML = g.n + "<span class=\"o\">" + S.own[i] + "</span>";
+    r.c.innerHTML = fmt(c) + "<small>+" + fmt(g.p * mult(g.t)) + "/s cada</small>";
+    r.b.classList.toggle("ok", S.e >= c);
+  });
+  FACT.forEach((f,i) => {
+    const r = frows[i], c = fcost(f,i);
+    r.n.innerHTML = f.n + "<span class=\"o\">" + S.fown[i] + "</span>";
+    r.c.innerHTML = fmt(c) + "<small>kWh</small>";
+    r.b.classList.toggle("ok", S.e >= c);
+  });
+}
+function save(){ S.t = Date.now(); try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (err) {} }
+
+function tab(g){
+  document.getElementById("gp").hidden = !g; document.getElementById("fp").hidden = g;
+  document.getElementById("tg").setAttribute("aria-selected", g);
+  document.getElementById("tf").setAttribute("aria-selected", !g);
+}
+document.getElementById("tg").onclick = () => tab(true);
+document.getElementById("tf").onclick = () => tab(false);
+
+const stage = document.getElementById("stage");
+document.getElementById("tap").addEventListener("click", (ev) => {
+  const v = click(); S.e += v; S.total += v;
+  const p = document.createElement("span");
+  p.className = "pop"; p.textContent = "+" + fmt(v);
+  const box = stage.getBoundingClientRect();
+  p.style.left = ((ev.clientX ? ev.clientX - box.left : box.width / 2) - 14) + "px";
+  p.style.top = ((ev.clientY ? ev.clientY - box.top : box.height / 2) - 30) + "px";
+  stage.appendChild(p); setTimeout(() => p.remove(), 720);
+  render();
+});
+
+let last = performance.now(), sinceSave = 0;
+setInterval(() => {
+  const now = performance.now(), dt = (now - last) / 1000;
+  last = now; sinceSave += dt;
+  const gain = cps() * dt;
+  if (gain > 0) { S.e += gain; S.total += gain; }
+  render();
+  if (sinceSave > 5) { sinceSave = 0; save(); }
+}, 100);
+document.addEventListener("visibilitychange", () => { if (document.hidden) save(); });
+
+const rb = document.getElementById("reset");
+let armed = false;
+rb.addEventListener("click", () => {
+  if (!armed) {
+    armed = true; rb.textContent = "Toque de novo para zerar";
+    setTimeout(() => { armed = false; rb.textContent = "Zerar jogo"; }, 3000);
+    return;
+  }
+  S = {e:0, total:0, lvl:0, own:GENS.map(()=>0), fown:FACT.map(()=>0), t:Date.now()};
+  armed = false; rb.textContent = "Zerar jogo"; save(); render();
+});
+render();
+</script>
+</body>
+</html>
